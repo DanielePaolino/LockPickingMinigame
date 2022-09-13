@@ -11,9 +11,7 @@ public class LockPickMinigame : MonoBehaviour
     [SerializeField] private GameObject pinLock;
     [SerializeField] private float innerLockRotationSpeed;
     [SerializeField] private float pinSpeed;
-    [SerializeField][Min(1)][Range(1, 25)] private float unlockRange; //range for unlocking (difficulty) in degrees
-    [SerializeField] private Transform unlockPoint;
-    [SerializeField] private Transform unlockPointRanged;
+    [SerializeField] [Range(1, 25)] private float unlockRange; //range for unlocking (difficulty) in degrees
 
     private Quaternion innerLockStartRotation;
     private Quaternion pinLockStartRotation;
@@ -31,8 +29,6 @@ public class LockPickMinigame : MonoBehaviour
         NewMinigame();
         pinLock.GetComponent<Animator>().enabled = false;
         innerLockStartRotation = innerLock.transform.rotation;
-        unlockPoint.transform.eulerAngles = new Vector3(unlockPoint.transform.eulerAngles.x, unlockPoint.transform.eulerAngles.y, unlockAngle);
-        unlockPointRanged.transform.eulerAngles = new Vector3(unlockPointRanged.transform.eulerAngles.x, unlockPointRanged.transform.eulerAngles.y, unlockAngle + unlockRange);
         pinLockStartRotation = pinLock.transform.rotation;
     }
 
@@ -42,7 +38,6 @@ public class LockPickMinigame : MonoBehaviour
         CheckInput();
         RotatePin();
         RotateInnerLock();
-        //Debug.Log(innerLock.transform.eulerAngles.z);
     }
 
     private void CheckInput()
@@ -51,10 +46,6 @@ public class LockPickMinigame : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.D))
         {
             canMovePin = false;
-            Quaternion pinRotation = pinLock.transform.rotation;
-            Debug.Log("euler: " + pinLock.transform.eulerAngles.z);
-            Debug.Log("rotation" + pinLock.transform.rotation.z);
-            Debug.Log("pinRotation" + pinRotation.z);
         }
 
         if (Input.GetKeyUp(KeyCode.D))
@@ -73,8 +64,7 @@ public class LockPickMinigame : MonoBehaviour
             float innerLockZ = innerLock.transform.localEulerAngles.z;
             pinZ = pinZ > 180 ? pinZ - 360 : pinZ;
             innerLockZ = innerLockZ > 180 ? innerLockZ - 360 : innerLockZ;
-            Debug.Log("pinZ " + pinZ);
-            Debug.Log("pinZ " + innerLockZ);
+
             if ((Mathf.Abs(unlockAngle - pinZ) < unlockRange))
             {
                 if(innerLockZ < maxAngle && innerLockZ > -maxAngle)
@@ -85,16 +75,10 @@ public class LockPickMinigame : MonoBehaviour
                 else
                 {
                     unlocked = true;
-                    StartCoroutine(ResetMinigame());
-                    
+                    StartCoroutine(ResetMinigame());                   
                 }
                 
             }
-
-            //else
-            //{
-            //    StartCoroutine(ShakePinLock());
-            //}
 
         }
     }
@@ -124,7 +108,7 @@ public class LockPickMinigame : MonoBehaviour
     private void NewMinigame()
     {
         unlocked = false;
-        unlockAngle = Random.Range(-maxAngle, maxAngle);
+        unlockAngle = Random.Range(-maxAngle + unlockRange, maxAngle + unlockRange);
         Debug.Log(unlockAngle);
     }
 
@@ -137,45 +121,24 @@ public class LockPickMinigame : MonoBehaviour
         Vector3 dir = (worldPosition - pinLock.transform.position).normalized;
 
 
-
         Gizmos.color = Color.red;
         Gizmos.DrawRay(pinLock.transform.position, dir * 10f);
         Gizmos.color = Color.green;
         Gizmos.DrawRay(pinLock.transform.position, pinLock.transform.up * 5f);
         Gizmos.DrawWireSphere(worldPosition, 1f);
         Handles.DrawWireArc(outerLock.transform.position, -outerLock.transform.forward, -outerLock.transform.right, 180f, 3f);
-
     }
-
-    //private void SmoothUnlockRotation()
-    //{
-    //    
-    //}
 
     private IEnumerator ResetMinigame()
     {
         canPlay = false;
         NewMinigame();
-        unlockPoint.gameObject.SetActive(false);
-        unlockPointRanged.gameObject.SetActive(false);
-        unlockPoint.transform.eulerAngles = new Vector3(unlockPoint.transform.eulerAngles.x, unlockPoint.transform.eulerAngles.y, unlockAngle);
-        unlockPointRanged.transform.eulerAngles = new Vector3(unlockPointRanged.transform.eulerAngles.x, unlockPointRanged.transform.eulerAngles.y, unlockAngle + unlockRange);
         yield return new WaitForSeconds(1f);
         Debug.Log("Reset minigame");
         innerLock.transform.rotation = innerLockStartRotation;
         pinLock.transform.rotation = pinLockStartRotation;     
         yield return new WaitForSeconds(0.3f);
-        unlockPoint.gameObject.SetActive(true);
-        unlockPointRanged.gameObject.SetActive(true);
         canPlay = true;
-    }
-
-    private IEnumerator ShakePinLock()
-    {
-        pinLock.GetComponent<Animator>().enabled = true;
-        pinLock.GetComponent<Animator>().Play("pinlockShakeAnim");
-        yield return new WaitForSeconds(0.5f);
-        pinLock.GetComponent<Animator>().enabled = false;
     }
 
 }
